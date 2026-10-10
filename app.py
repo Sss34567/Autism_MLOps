@@ -1,0 +1,1 @@
+from Autism.component import data_ingestion
