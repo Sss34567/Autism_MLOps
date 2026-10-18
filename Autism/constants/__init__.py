@@ -9,6 +9,10 @@ PIPLINE_NAME : str = "autism"
 ARTIFACT_DIR: str = "artifact"
 MODEL_FILE_NAME = "model.pkl"
 
+TARGET_COLUMN = "Class/ASD"
+CURRENT_YEAR = date.today().year
+PREPROCSSING_OBJECT_FILE_NAME = "preprocssing.pkl"
+SCHEMA_FILE_PATH = os.path.join("config", "schema.yaml")
 
 DATA_INGESTION_COLLECTION_NAME: str = "Autism_data"
 DATA_INGESTION_DIR_NAME: str = "data_ingestion"
@@ -19,3 +23,7 @@ FILE_NAME: str = "Autism.csv"
 TRAIN_FILE_NAME: str = "train.csv"
 
 TEST_FILE_NAME: str="test.csv"
+
+DATA_VALIDATION_DIR_NAME: str = "data_validation"
+DATA_VALIDATION_DRIFT_REPORT_DIR: str = "drift_report"
+DATA_VALIDATION_DRIFT_REPORT_FILE_NAME: str = "report.yaml"
