@@ -44,7 +44,7 @@ class DataForm:
 @app.get("/", tags=["authentication"])
 async def index(request: Request):
     return templates.TemplateResponse(
-        "autism.html", {"request": request, "context": "Rendering"}
+        "Autism.html", {"request": request, "context": "Rendering"}
     )
 
 
