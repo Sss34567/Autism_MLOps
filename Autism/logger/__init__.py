@@ -1,19 +1,28 @@
 import logging
 import os
-
-from from_root import from_root
+import sys
 from datetime import datetime
+from pathlib import Path
 
+LOG_DIR = "logs"
 LOG_FILE = f"{datetime.now().strftime('%m_%d_%Y_%H_%M_%S')}.log"
 
-log_dir = 'logs'
+PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 
-logs_path = os.path.join(from_root(), log_dir, LOG_FILE)
+try:
+    log_dir_path = PROJECT_ROOT / LOG_DIR
+    log_dir_path.mkdir(parents=True, exist_ok=True)
+except OSError:
+    log_dir_path = Path("/tmp") / LOG_DIR
+    log_dir_path.mkdir(parents=True, exist_ok=True)
 
-os.makedirs(log_dir, exist_ok=True)
+logs_path = os.path.join(log_dir_path, LOG_FILE)
 
 logging.basicConfig(
-    filename=logs_path,
+    level=logging.INFO,
     format="[%(asctime)s] %(name)s - %(levelname)s - %(message)s",
-    level=logging.DEBUG,
+    handlers=[
+        logging.FileHandler(logs_path),
+        logging.StreamHandler(sys.stdout),  # يظهر في Azure Log stream
+    ],
 )
