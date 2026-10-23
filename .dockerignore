@@ -1,0 +1,8 @@
+artifact
+logs
+.git
+.env
+__pycache__
+*.pyc
+*.ipynb
+catboost_info
