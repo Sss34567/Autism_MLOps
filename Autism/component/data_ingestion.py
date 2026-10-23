@@ -1,6 +1,8 @@
 import os
 import sys
 
+from sklearn.model_selection import train_test_split
+from Autism.constants import TARGET_COLUMN
 from pandas import DataFrame
 import pandas as pd
 from Autism.entity.config_entity import DataIngestionConfig
@@ -45,24 +47,20 @@ class DataIngestion:
             raise AutismException(e,sys)
 
 
-    def split_data_as_train_test(self, dataframe) -> None:
-        
-        """
-         Method Name :   split_data_as_train_test
-         """
-        logging.info("Entered split_data_as_train_test method of Data_Ingestion class")
+    def split_data_as_train_test(self, dataframe: DataFrame) -> None:
         try:
-            train_set = pd.read_csv(r"notebook/train.csv")
-            test_set = pd.read_csv(r"C:/Users/samah67/Downloads/test.csv")
-
+            train_set, test_set = train_test_split(
+                dataframe,
+                test_size=0.2,
+                random_state=42,
+                stratify=dataframe[TARGET_COLUMN]
+            )
             dir_path = os.path.dirname(self.data_ingestion_config.training_file_path)
             os.makedirs(dir_path, exist_ok=True)
+            
 
-            logging.info("Exporting train and test file path.")
             train_set.to_csv(self.data_ingestion_config.training_file_path, index=False, header=True)
             test_set.to_csv(self.data_ingestion_config.testing_file_path, index=False, header=True)
-
-            logging.info("Exported train and test file path.")
         except Exception as e:
             raise AutismException(e, sys) from e
 

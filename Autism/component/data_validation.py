@@ -12,7 +12,7 @@ from Autism.logger import logging
 from Autism.utils.main_utils import read_yaml_file, write_yaml_file
 from Autism.entity.artifact_entity import DataIngestionArtifact, DataValidationArtifact
 from Autism.entity.config_entity import DataValidationConfig
-from Autism.constants import SCHEMA_FILE_PATH
+from Autism.constants import SCHEMA_FILE_PATH, TARGET_COLUMN
 
 
 class DataValidation:
@@ -28,49 +28,42 @@ class DataValidation:
         except Exception as e:
             raise AutismException(e,sys)
 
-    def validate_number_of_columns(self, dataframe: DataFrame) -> bool:
-        """
-        Method Name :   validate_number_of_columns
-        Description :   This method validates the number of columns
-        
-        Output      :   Returns bool value based on validation results
-        On Failure  :   Write an exception log and then raise an exception
-        """
+    def validate_number_of_columns(self, dataframe: DataFrame, is_test: bool = False) -> bool:
         try:
-            status = len(dataframe.columns) == len(self._schema_config["columns"])
-            logging.info(f"Is required column present: [{status}]")
+            schema_cols = [list(c.keys())[0] for c in self._schema_config["columns"]]
+            if is_test:
+                schema_cols = [c for c in schema_cols if c != TARGET_COLUMN]
+            status = len(dataframe.columns) == len(schema_cols)
+            logging.info(f"Is required column count correct: [{status}]")
             return status
         except Exception as e:
             raise AutismException(e, sys)
 
-    def is_column_exist(self, df: DataFrame) -> bool:
-        """
-        Method Name :   is_column_exist
-        Description :   This method validates the existence of a numerical and categorical columns
-        
-        Output      :   Returns bool value based on validation results
-        On Failure  :   Write an exception log and then raise an exception
-        """
+    def is_column_exist(self, df: DataFrame, is_test: bool = False) -> bool:
         try:
             dataframe_columns = df.columns
             missing_numerical_columns = []
             missing_categorical_columns = []
+
             for column in self._schema_config["numerical_columns"]:
+                if is_test and column == TARGET_COLUMN:
+                    continue
                 if column not in dataframe_columns:
                     missing_numerical_columns.append(column)
 
-            if len(missing_numerical_columns)>0:
+            if len(missing_numerical_columns) > 0:
                 logging.info(f"Missing numerical column: {missing_numerical_columns}")
-
-
+                
             for column in self._schema_config["categorical_columns"]:
+                if is_test and column == TARGET_COLUMN:
+                    continue
                 if column not in dataframe_columns:
                     missing_categorical_columns.append(column)
 
-            if len(missing_categorical_columns)>0:
+            if len(missing_categorical_columns) > 0:
                 logging.info(f"Missing categorical column: {missing_categorical_columns}")
 
-            return False if len(missing_categorical_columns)>0 or len(missing_numerical_columns)>0 else True
+            return not (len(missing_categorical_columns) > 0 or len(missing_numerical_columns) > 0)
         except Exception as e:
             raise AutismException(e, sys) from e
 
@@ -143,16 +136,27 @@ class DataValidation:
                 validation_error_msg += f"columns are missing in test dataframe."
 
             validation_status = len(validation_error_msg) == 0
+            print("validation_status:", validation_status)
+            print("validation_error_msg:", validation_error_msg)
+            print("test columns:", list(test_df.columns))
+            print("train columns:", list(train_df.columns))
+            print("report path:", self.data_validation_config.drift_report_file_path)
+
 
             if validation_status:
-                drift_status = self.detect_dataset_drift(train_df, test_df)
+                drift_status = self.detect_dataset_drift(
+                    train_df.drop(columns=[TARGET_COLUMN], errors="ignore"),
+                    test_df.drop(columns=[TARGET_COLUMN], errors="ignore"),
+                )
+
                 if drift_status:
-                    logging.info(f"Drift detected.")
+                    logging.info("Drift detected.")
                     validation_error_msg = "Drift detected"
                 else:
                     validation_error_msg = "Drift not detected"
             else:
                 logging.info(f"Validation_error: {validation_error_msg}")
+
                 
 
             data_validation_artifact = DataValidationArtifact(
